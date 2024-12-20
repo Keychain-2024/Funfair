@@ -82,29 +82,81 @@
                 <th>Arihant Share (30%)</th>
                 <th>Vansh Share (30%)</th>
                 <th>Yash Share (40%)</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
-    <script>
-        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+    <script type="module">
+        // Import the necessary functions from the Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getDatabase, ref, set, push, get, child } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-analytics.js";
 
-        const itemPrices = {
-            "Sigma face": 16,
-            "Sigma glasses": 8,
-            "Air Jorden shoe": 14
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwjIKTiginHOBxxOJPFh1olavDVSstuUI",
+            authDomain: "funfair-5195e.firebaseapp.com",
+            projectId: "funfair-5195e",
+            storageBucket: "funfair-5195e.firebasestorage.app",
+            messagingSenderId: "786600097358",
+            appId: "1:786600097358:web:180f325c839cb6a2de351f",
+            measurementId: "G-TMRBCJWGHK"
         };
 
-        function saveOrders() {
-            localStorage.setItem('orders', JSON.stringify(orders));
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        
+        // Initialize Realtime Database
+        const db = getDatabase(app);
+
+        // Function to add an order
+        function addOrder(itemName, quantity, costPrice, sellingPrice) {
+            const orderRef = ref(db, 'orders');
+            const newOrderRef = push(orderRef);
+            const profit = (sellingPrice - costPrice) * quantity;
+            const arihantShare = profit * 0.3;
+            const vanshShare = profit * 0.3;
+            const yashShare = profit * 0.4;
+
+            // Create the order object
+            const order = {
+                itemName,
+                quantity,
+                costPrice,
+                sellingPrice,
+                profit,
+                arihantShare,
+                vanshShare,
+                yashShare
+            };
+
+            // Save the order to Firebase Realtime Database
+            set(newOrderRef, order);
         }
 
-        function renderOrders() {
+        // Function to retrieve orders from Firebase
+        function fetchOrders() {
+            const ordersRef = ref(db, 'orders');
+            get(ordersRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const orders = snapshot.val();
+                    console.log("Fetched Orders: ", orders); // Log the fetched orders
+                    renderOrders(Object.values(orders)); // Render the orders
+                } else {
+                    console.log("No data available");
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
+
+        // Render orders on the page
+        function renderOrders(orders) {
             const tbody = document.querySelector('#orderTable tbody');
-            tbody.innerHTML = '';
-            orders.forEach((order, index) => {
+            tbody.innerHTML = ''; // Clear existing rows
+            orders.forEach(order => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${order.itemName}</td>
@@ -115,58 +167,45 @@
                     <td>${order.arihantShare.toFixed(2)}</td>
                     <td>${order.vanshShare.toFixed(2)}</td>
                     <td>${order.yashShare.toFixed(2)}</td>
-                    <td>
-                        <button onclick="editOrder(${index})">Edit</button>
-                        <button onclick="deleteOrder(${index})">Delete</button>
-                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function addOrder(event) {
+        // Handle form submission to add a new order
+        document.getElementById('orderForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const itemName = document.getElementById('itemName').value;
             const quantity = parseInt(document.getElementById('quantity').value);
             const costPrice = parseFloat(document.getElementById('costPrice').value);
             const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
-            const profit = (sellingPrice - costPrice) * quantity;
-            const arihantShare = profit * 0.3;
-            const vanshShare = profit * 0.3;
-            const yashShare = profit * 0.4;
+            
+            // Add order to Firebase
+            addOrder(itemName, quantity, costPrice, sellingPrice);
 
-            orders.push({ itemName, quantity, costPrice, sellingPrice, profit, arihantShare, vanshShare, yashShare });
-            saveOrders();
-            renderOrders();
+            // Fetch and render updated orders
+            fetchOrders();
+
+            // Reset form after adding
             event.target.reset();
-        }
+        });
 
-        function editOrder(index) {
-            const order = orders[index];
-            document.getElementById('itemName').value = order.itemName;
-            document.getElementById('quantity').value = order.quantity;
-            document.getElementById('costPrice').value = order.costPrice;
-            document.getElementById('sellingPrice').value = order.sellingPrice;
-            orders.splice(index, 1);
-            saveOrders();
-            renderOrders();
-        }
-
-        function deleteOrder(index) {
-            orders.splice(index, 1);
-            saveOrders();
-            renderOrders();
-        }
-
+        // Update the cost price based on selected item
         function updateCostPrice() {
             const itemName = document.getElementById('itemName').value;
+            const itemPrices = {
+                "Sigma face": 16,
+                "Sigma glasses": 8,
+                "Air Jorden shoe": 14
+            };
             const costPrice = itemPrices[itemName] || 0;
             document.getElementById('costPrice').value = costPrice;
         }
 
-        document.getElementById('orderForm').addEventListener('submit', addOrder);
         document.getElementById('itemName').addEventListener('change', updateCostPrice);
-        renderOrders();
+
+        // Fetch and render orders when the page loads
+        fetchOrders();
     </script>
 </body>
 </html>
