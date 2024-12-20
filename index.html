@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keychain Order Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, select {
+            width: 100%;
+            padding: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Keychain Order Tracker</h1>
+    <form id="orderForm">
+        <select id="itemName" required>
+            <option value="">Select Item</option>
+            <option value="Sigma face">Sigma face</option>
+            <option value="Sigma glasses">Sigma glasses</option>
+            <option value="Air Jorden shoe">Air Jorden shoe</option>
+        </select>
+        <select id="quantity" required>
+            <option value="">Select Quantity</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+        </select>
+        <input type="number" id="costPrice" placeholder="Cost Price" step="0.01" readonly>
+        <input type="number" id="sellingPrice" placeholder="Selling Price" step="0.01" required>
+        <button type="submit">Add Order</button>
+    </form>
+    <table id="orderTable">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+                <th>Profit</th>
+                <th>Arihant Share (30%)</th>
+                <th>Vansh Share (30%)</th>
+                <th>Yash Share (40%)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+        const itemPrices = {
+            "Sigma face": 16,
+            "Sigma glasses": 8,
+            "Air Jorden shoe": 14
+        };
+
+        function saveOrders() {
+            localStorage.setItem('orders', JSON.stringify(orders));
+        }
+
+        function renderOrders() {
+            const tbody = document.querySelector('#orderTable tbody');
+            tbody.innerHTML = '';
+            orders.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${order.itemName}</td>
+                    <td>${order.quantity}</td>
+                    <td>${order.costPrice.toFixed(2)}</td>
+                    <td>${order.sellingPrice.toFixed(2)}</td>
+                    <td>${order.profit.toFixed(2)}</td>
+                    <td>${order.arihantShare.toFixed(2)}</td>
+                    <td>${order.vanshShare.toFixed(2)}</td>
+                    <td>${order.yashShare.toFixed(2)}</td>
+                    <td>
+                        <button onclick="editOrder(${index})">Edit</button>
+                        <button onclick="deleteOrder(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addOrder(event) {
+            event.preventDefault();
+            const itemName = document.getElementById('itemName').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const costPrice = parseFloat(document.getElementById('costPrice').value);
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
+            const profit = (sellingPrice - costPrice) * quantity;
+            const arihantShare = profit * 0.3;
+            const vanshShare = profit * 0.3;
+            const yashShare = profit * 0.4;
+
+            orders.push({ itemName, quantity, costPrice, sellingPrice, profit, arihantShare, vanshShare, yashShare });
+            saveOrders();
+            renderOrders();
+            event.target.reset();
+        }
+
+        function editOrder(index) {
+            const order = orders[index];
+            document.getElementById('itemName').value = order.itemName;
+            document.getElementById('quantity').value = order.quantity;
+            document.getElementById('costPrice').value = order.costPrice;
+            document.getElementById('sellingPrice').value = order.sellingPrice;
+            orders.splice(index, 1);
+            saveOrders();
+            renderOrders();
+        }
+
+        function deleteOrder(index) {
+            orders.splice(index, 1);
+            saveOrders();
+            renderOrders();
+        }
+
+        function updateCostPrice() {
+            const itemName = document.getElementById('itemName').value;
+            const costPrice = itemPrices[itemName] || 0;
+            document.getElementById('costPrice').value = costPrice;
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', addOrder);
+        document.getElementById('itemName').addEventListener('change', updateCostPrice);
+        renderOrders();
+    </script>
+</body>
+</html>
