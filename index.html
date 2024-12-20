@@ -82,45 +82,98 @@
                 <th>Arihant Share (30%)</th>
                 <th>Vansh Share (30%)</th>
                 <th>Yash Share (40%)</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
-    <script type="module">
-        // Import the necessary functions from the Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getDatabase, ref, set, push, get, child } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-analytics.js";
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 
-        // Your web app's Firebase configuration
+    <script>
+        // Import necessary Firebase functions
+        import { initializeApp } from "firebase/app";
+        import { getDatabase, ref, set, get, child, push, remove } from "firebase/database";
+
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDwjIKTiginHOBxxOJPFh1olavDVSstuUI",
-            authDomain: "funfair-5195e.firebaseapp.com",
-            projectId: "funfair-5195e",
-            storageBucket: "funfair-5195e.firebasestorage.app",
-            messagingSenderId: "786600097358",
-            appId: "1:786600097358:web:180f325c839cb6a2de351f",
-            measurementId: "G-TMRBCJWGHK"
+            apiKey: "AIzaSyDKE1NUwCUY5ZANhv9jRnAwXcm-CXtsR_I",
+            authDomain: "keychain-4a080.firebaseapp.com",
+            projectId: "keychain-4a080",
+            storageBucket: "keychain-4a080.firebasestorage.app",
+            messagingSenderId: "101680064628",
+            appId: "1:101680064628:web:0893aaa2583fcacf06c921",
+            measurementId: "G-8T42LHLL3E"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        
-        // Initialize Realtime Database
         const db = getDatabase(app);
 
+        const itemPrices = {
+            "Sigma face": 16,
+            "Sigma glasses": 8,
+            "Air Jorden shoe": 14
+        };
+
+        // Firebase URL for Real-time Database
+        const databaseURL = "https://keychain-4a080-default-rtdb.firebaseio.com/";
+
+        // Function to save an order to Firebase
+        function saveOrder(order) {
+            const ordersRef = ref(db, 'orders');
+            const newOrderRef = push(ordersRef);
+            set(newOrderRef, order);
+        }
+
+        // Function to get orders from Firebase and render them
+        function renderOrders() {
+            const tbody = document.querySelector('#orderTable tbody');
+            tbody.innerHTML = '';
+            
+            const ordersRef = ref(db, 'orders');
+            get(ordersRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    const orders = snapshot.val();
+                    for (const key in orders) {
+                        const order = orders[key];
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${order.itemName}</td>
+                            <td>${order.quantity}</td>
+                            <td>${order.costPrice.toFixed(2)}</td>
+                            <td>${order.sellingPrice.toFixed(2)}</td>
+                            <td>${order.profit.toFixed(2)}</td>
+                            <td>${order.arihantShare.toFixed(2)}</td>
+                            <td>${order.vanshShare.toFixed(2)}</td>
+                            <td>${order.yashShare.toFixed(2)}</td>
+                            <td>
+                                <button onclick="editOrder('${key}')">Edit</button>
+                                <button onclick="deleteOrder('${key}')">Delete</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    console.log("No data available");
+                }
+            });
+        }
+
         // Function to add an order
-        function addOrder(itemName, quantity, costPrice, sellingPrice) {
-            const orderRef = ref(db, 'orders');
-            const newOrderRef = push(orderRef);
+        function addOrder(event) {
+            event.preventDefault();
+            const itemName = document.getElementById('itemName').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const costPrice = parseFloat(document.getElementById('costPrice').value);
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
             const profit = (sellingPrice - costPrice) * quantity;
             const arihantShare = profit * 0.3;
             const vanshShare = profit * 0.3;
             const yashShare = profit * 0.4;
 
-            // Create the order object
             const order = {
                 itemName,
                 quantity,
@@ -132,80 +185,48 @@
                 yashShare
             };
 
-            // Save the order to Firebase Realtime Database
-            set(newOrderRef, order);
-        }
+            // Save the order to Firebase
+            saveOrder(order);
 
-        // Function to retrieve orders from Firebase
-        function fetchOrders() {
-            const ordersRef = ref(db, 'orders');
-            get(ordersRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const orders = snapshot.val();
-                    console.log("Fetched Orders: ", orders); // Log the fetched orders
-                    renderOrders(Object.values(orders)); // Render the orders
-                } else {
-                    console.log("No data available");
-                }
-            }).catch((error) => {
-                console.error(error);
-            });
-        }
+            // Render updated orders
+            renderOrders();
 
-        // Render orders on the page
-        function renderOrders(orders) {
-            const tbody = document.querySelector('#orderTable tbody');
-            tbody.innerHTML = ''; // Clear existing rows
-            orders.forEach(order => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${order.itemName}</td>
-                    <td>${order.quantity}</td>
-                    <td>${order.costPrice.toFixed(2)}</td>
-                    <td>${order.sellingPrice.toFixed(2)}</td>
-                    <td>${order.profit.toFixed(2)}</td>
-                    <td>${order.arihantShare.toFixed(2)}</td>
-                    <td>${order.vanshShare.toFixed(2)}</td>
-                    <td>${order.yashShare.toFixed(2)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Handle form submission to add a new order
-        document.getElementById('orderForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const itemName = document.getElementById('itemName').value;
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const costPrice = parseFloat(document.getElementById('costPrice').value);
-            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
-            
-            // Add order to Firebase
-            addOrder(itemName, quantity, costPrice, sellingPrice);
-
-            // Fetch and render updated orders
-            fetchOrders();
-
-            // Reset form after adding
             event.target.reset();
-        });
+        }
 
-        // Update the cost price based on selected item
+        // Function to edit an order
+        function editOrder(orderId) {
+            const orderRef = ref(db, 'orders/' + orderId);
+            get(orderRef).then(snapshot => {
+                const order = snapshot.val();
+                document.getElementById('itemName').value = order.itemName;
+                document.getElementById('quantity').value = order.quantity;
+                document.getElementById('costPrice').value = order.costPrice;
+                document.getElementById('sellingPrice').value = order.sellingPrice;
+                remove(orderRef); // Remove the order after editing
+            });
+        }
+
+        // Function to delete an order
+        function deleteOrder(orderId) {
+            const orderRef = ref(db, 'orders/' + orderId);
+            remove(orderRef);
+            renderOrders();
+        }
+
+        // Update cost price based on item selection
         function updateCostPrice() {
             const itemName = document.getElementById('itemName').value;
-            const itemPrices = {
-                "Sigma face": 16,
-                "Sigma glasses": 8,
-                "Air Jorden shoe": 14
-            };
             const costPrice = itemPrices[itemName] || 0;
             document.getElementById('costPrice').value = costPrice;
         }
 
+        // Event listeners
+        document.getElementById('orderForm').addEventListener('submit', addOrder);
         document.getElementById('itemName').addEventListener('change', updateCostPrice);
 
-        // Fetch and render orders when the page loads
-        fetchOrders();
+        // Initial render
+        renderOrders();
     </script>
 </body>
 </html>
