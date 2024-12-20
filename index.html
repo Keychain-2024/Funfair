@@ -110,16 +110,13 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db = getDatabase(app, 'https://keychain-4a080-default-rtdb.firebaseio.com/');
 
         const itemPrices = {
             "Sigma face": 16,
             "Sigma glasses": 8,
             "Air Jorden shoe": 14
         };
-
-        // Firebase URL for Real-time Database
-        const databaseURL = "https://keychain-4a080-default-rtdb.firebaseio.com/";
 
         // Function to save an order to Firebase
         function saveOrder(order) {
