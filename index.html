@@ -3,100 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Update Example</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        form {
-            display: grid;
-            gap: 10px;
-        }
-        input, select, button {
-            padding: 10px;
-            font-size: 16px;
-        }
-    </style>
+    <title>Keychain Order Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Update Order</h1>
-    <form id="updateForm">
-        <input type="text" id="orderId" placeholder="Order ID" required>
-        <input type="text" id="itemName" placeholder="Item Name" required>
-        <input type="number" id="quantity" placeholder="Quantity" required>
-        <input type="number" id="sellingPrice" placeholder="Selling Price" step="0.01" required>
-        <button type="submit">Update Order</button>
-    </form>
-    <div id="message"></div>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8">Keychain Order Tracker</h1>
+        <form id="orderForm" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="itemName">
+                    Item Name
+                </label>
+                <select id="itemName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <option value="">Select Item</option>
+                    <option value="Sigma face">Sigma face</option>
+                    <option value="Sigma glasses">Sigma glasses</option>
+                    <option value="Air Jorden shoe">Air Jorden shoe</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="quantity">
+                    Quantity
+                </label>
+                <select id="quantity" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <option value="">Select Quantity</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="costPrice">
+                    Cost Price
+                </label>
+                <input type="number" id="costPrice" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Cost Price" step="0.01" readonly>
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="sellingPrice">
+                    Selling Price
+                </label>
+                <input type="number" id="sellingPrice" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Selling Price" step="0.01" required>
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Add Order
+                </button>
+            </div>
+        </form>
+        <div class="overflow-x-auto">
+            <table id="orderTable" class="w-full bg-white shadow-md rounded mb-4">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left">Item Name</th>
+                        <th class="py-3 px-6 text-left">Quantity</th>
+                        <th class="py-3 px-6 text-left">Cost Price</th>
+                        <th class="py-3 px-6 text-left">Selling Price</th>
+                        <th class="py-3 px-6 text-left">Profit</th>
+                        <th class="py-3 px-6 text-left">Arihant Share (30%)</th>
+                        <th class="py-3 px-6 text-left">Vansh Share (30%)</th>
+                        <th class="py-3 px-6 text-left">Yash Share (40%)</th>
+                        <th class="py-3 px-6 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 
-    <script type="module">
-        // Import Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+    <script>
+        let orders = JSON.parse(localStorage.getItem('orders')) || [];
 
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBjgoF0vRnU0x4bTRgO9evmJ1JD0k-39Zc",
-            authDomain: "e-e60ae.firebaseapp.com",
-            projectId: "e-e60ae",
-            storageBucket: "e-e60ae.firebasestorage.app",
-            messagingSenderId: "869284020508",
-            appId: "1:869284020508:web:91f9102019fa9d3bc93ad9",
-            measurementId: "G-9R70RSE6QH"
+        const itemPrices = {
+            "Sigma face": 16,
+            "Sigma glasses": 8,
+            "Air Jorden shoe": 14
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // Function to update data
-        function updateOrder(orderId, data) {
-            const orderRef = ref(db, 'orders/' + orderId);
-            update(orderRef, data)
-                .then(() => {
-                    document.getElementById('message').innerText = "Order updated successfully!";
-                })
-                .catch(error => {
-                    console.error("Error updating order:", error);
-                    document.getElementById('message').innerText = "Error updating order.";
-                });
+        function saveOrders() {
+            localStorage.setItem('orders', JSON.stringify(orders));
         }
 
-        // Form submission handler
-        document.getElementById('updateForm').addEventListener('submit', (event) => {
+        function renderOrders() {
+            const tbody = document.querySelector('#orderTable tbody');
+            tbody.innerHTML = '';
+            orders.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-200 hover:bg-gray-100';
+                tr.innerHTML = `
+                    <td class="py-3 px-6 text-left whitespace-nowrap">${order.itemName}</td>
+                    <td class="py-3 px-6 text-left">${order.quantity}</td>
+                    <td class="py-3 px-6 text-left">${order.costPrice.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">${order.sellingPrice.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">${order.profit.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">${order.arihantShare.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">${order.vanshShare.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">${order.yashShare.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-left">
+                        <button onclick="editOrder(${index})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-2">Edit</button>
+                        <button onclick="deleteOrder(${index})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addOrder(event) {
             event.preventDefault();
-
-            const orderId = document.getElementById('orderId').value.trim();
-            const itemName = document.getElementById('itemName').value.trim();
+            const itemName = document.getElementById('itemName').value;
             const quantity = parseInt(document.getElementById('quantity').value);
+            const costPrice = parseFloat(document.getElementById('costPrice').value);
             const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
-
-            // Calculating profit and shares
-            const costPrice = 10; // Example cost price, replace as necessary
             const profit = (sellingPrice - costPrice) * quantity;
             const arihantShare = profit * 0.3;
             const vanshShare = profit * 0.3;
             const yashShare = profit * 0.4;
 
-            // Data to update
-            const updatedData = {
-                itemName,
-                quantity,
-                sellingPrice,
-                profit,
-                arihantShare,
-                vanshShare,
-                yashShare
-            };
+            orders.push({ itemName, quantity, costPrice, sellingPrice, profit, arihantShare, vanshShare, yashShare });
+            saveOrders();
+            renderOrders();
+            event.target.reset();
+        }
 
-            updateOrder(orderId, updatedData);
-        });
+        function editOrder(index) {
+            const order = orders[index];
+            document.getElementById('itemName').value = order.itemName;
+            document.getElementById('quantity').value = order.quantity;
+            document.getElementById('costPrice').value = order.costPrice;
+            document.getElementById('sellingPrice').value = order.sellingPrice;
+            orders.splice(index, 1);
+            saveOrders();
+            renderOrders();
+        }
+
+        function deleteOrder(index) {
+            orders.splice(index, 1);
+            saveOrders();
+            renderOrders();
+        }
+
+        function updateCostPrice() {
+            const itemName = document.getElementById('itemName').value;
+            const costPrice = itemPrices[itemName] || 0;
+            document.getElementById('costPrice').value = costPrice;
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', addOrder);
+        document.getElementById('itemName').addEventListener('change', updateCostPrice);
+        renderOrders();
     </script>
 </body>
 </html>
+
